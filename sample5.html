@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <title>Vue 3</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script src="https://unpkg.com/vue@next"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.js"></script>
+  <script>
+// Vue3 Composition API
+const { createApp, ref } = Vue
+const { createVuetify } = Vuetify
+
+const vuetify = createVuetify()
+
+const app = createApp({
+  template: `
+  <main-page />
+  `
+}).use(vuetify)
+
+app.component('main-page', {
+  template: `
+    <v-app>
+      <v-main>
+        <v-container>
+          <v-card>
+            <v-card-title>
+              button sample
+            </v-card-title>
+            <v-card-subtitle>
+              button sample
+            </v-card-subtitle>
+            <v-card-text>
+              <button-counter />
+            </v-card-text>
+          </v-card>
+        </v-container>
+      </v-main>
+    </v-app>
+  `
+})
+
+app.component('button-counter', {
+  setup() {
+    const count = ref(0)
+    return {
+      count
+    }
+  },
+  template: `
+    <v-btn color="primary" @click="count++">
+      {{ count }} times.
+    </v-btn>
+  `
+})
+app.mount("#app")
+  </script>
+</body>
+</html>

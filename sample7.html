@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <title>Vue 3</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script src="https://unpkg.com/vue@next"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.js"></script>
+  <script src="https://unpkg.com/vue-router@4"></script>
+  <script>
+// Vue3 Composition API
+const { createApp, ref, onMounted } = Vue
+
+const Layout = {
+  setup() {
+    const drawer = ref(true)
+    const items = [
+      { name: 'Home', icon: 'mdi-home', to: '/users' },
+      { name: 'About', icon: 'mdi-information', to: '/about' },
+    ]
+    return {
+        drawer,
+        items
+    }
+  },
+  template: `
+    <v-app>
+      <v-app-bar dark color="primary" app>
+        <v-app-bar-nav-icon variant="text" @click.stop="drawer = !drawer" />
+        <v-toolbar-title>
+          title
+        </v-toolbar-title>
+      </v-app-bar>
+      <v-navigation-drawer v-model="drawer" permanent app>
+        <v-list>
+          <v-list-item v-for="(item, i) in items" :key="i" :value="item.name" :to="item.to">
+            <v-list-item-title>
+              <v-icon color="primary" :icon="item.icon" class="pb-2" />
+              {{ item.name }}
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-navigation-drawer>
+
+      <v-main>
+        <v-container>
+          <router-view />
+        </v-container>
+      </v-main>
+    </v-app>
+  `
+}
+
+const Users = {
+  setup() {
+    const users = ref([])
+    const error = ref({})
+
+    onMounted(async () => {
+      try {
+        const res = await fetch("https://jsonplaceholder.typicode.com/users")
+        if(!res.ok) {
+          switch (res.status) {
+            case 400: throw Error('INVALID_TOKEN');
+            case 401: throw Error('UNAUTHORIZED');
+            case 404: throw Error('NOT_FOUND');
+            case 500: throw Error('INTERNAL_SERVER_ERROR');
+            case 502: throw Error('BAD_GATEWAY');
+            default:  throw Error('UNHANDLED_ERROR');
+          } 
+        }
+        users.value = await res.json()
+      } catch (e) {
+        error.value = e.message
+        console.log(error.value)
+      }
+    })
+
+    return {
+      users,
+      error
+    }
+  },
+  template: `
+    <v-card>
+      <v-card-title>
+        Users Table
+      </v-card-title>
+      <v-card-subtitle>
+        fetch sample
+      </v-card-subtitle>
+      <v-card-text>
+        <v-table density="compact">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Website</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="user in users" :key="user.id">
+              <td>{{ user.name }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.website }}</td>
+            </tr>
+          </tbody>
+        </v-table>
+      </v-card-text>
+    </v-card>
+  `
+}
+
+const About = {
+  template: `
+    <div class="main">
+      <h1>This is an About page</h1>
+    </div>
+  `
+}
+
+const routes = [
+  {
+    path: '/',
+    component: Layout,
+    children: [
+      { path: '/users', component: Users },
+      { path: '/about', component: About },
+    ]
+  }
+]
+
+const router = VueRouter.createRouter({
+  history: VueRouter.createWebHashHistory(),
+  routes,
+})
+
+const vuetify = Vuetify.createVuetify()
+
+const app = createApp({
+  template: `
+    <router-view />
+  `
+})
+.use(router)
+.use(vuetify)
+.mount("#app")
+
+  </script>
+</body>
+</html>

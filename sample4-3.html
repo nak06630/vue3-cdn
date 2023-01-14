@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vue 3</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script src="https://unpkg.com/vue@next"></script>
+  <script>
+// Vue3 Composition API
+const { createApp, ref, toRefs  } = Vue
+
+const app = createApp({
+  template: `
+    <pages-main />
+  `
+})
+
+app.component('pages-main', {
+  setup() {
+    const count = ref(0)
+    function increment() {
+      count.value++
+    }
+    return { count, increment }
+  },
+  template: `
+    <button-counter :count="count" @increment="increment" /><br />
+    <button-counter :count="count" @increment="increment" /><br />
+    <button-counter :count="count" @increment="increment" />
+  `
+})
+
+app.component('button-counter', {
+  props: {
+    count: Number
+  },
+  setup(props) {
+  },
+  template: `
+    <button @click="$emit('increment')">
+      {{ count }} times.
+    </button>
+  `
+})
+app.mount("#app")
+  </script>
+</body>
+</html>

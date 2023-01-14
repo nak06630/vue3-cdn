@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vue 3</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script src="https://unpkg.com/vue@next"></script>
+  <script>
+// Vue3 Composition API
+const { createApp, ref, inject, provide } = Vue
+
+const useStore = () => {
+  const count = ref(0)
+  function increment() {
+    count.value++
+  }
+  return { count, increment }
+}
+
+const app = createApp({
+  template: `
+    <pages-main />
+  `
+})
+
+app.component('pages-main', {
+  setup() {
+    provide('count', useStore())
+  },
+  template: `
+    <button-counter /><br />
+    <button-counter /><br />
+    <button-counter />
+  `
+})
+
+app.component('button-counter', {
+  setup() {
+    const { count, increment } = inject('count')
+    return {
+      count,
+      increment
+    }
+  },
+  template: `
+    <button @click="increment()">
+      {{ count }} times.
+    </button>
+  `
+})
+app.mount("#app")
+  </script>
+</body>
+</html>
