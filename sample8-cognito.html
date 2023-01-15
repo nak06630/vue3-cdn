@@ -19,6 +19,28 @@ const { createApp, ref, onMounted } = Vue
 const { CognitoUserPool, CognitoUser, AuthenticationDetails } = AmazonCognitoIdentity
 const vuetify = Vuetify.createVuetify()
 
+const useValidation = () => {
+  const Rules = {
+    email: [
+      (v) => !!v || 'メールアドレスを入力してください',
+      (v) => v.length <= 32 || '32文字以下で入力してください',
+      (v) => /.+@.+\..+/.test(v) || 'メールアドレスを入力してください',
+    ],
+    password: [
+      (v) => !!v || 'パスワードを入力してください',
+      (v) => /^(?=.*[A-Z])/.test(v) || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
+      (v) => /^(?=.*[a-z])/.test(v) || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
+      (v) => /^(?=.*[0-9])/.test(v) || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
+      (v) => /^(?=.*[ ^$*.[\]{}()?"!@#%&/\\,><':;|_~`=+-])/.test(v) || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
+      (v) => v.length >= 8 || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
+      (v) => v.length <= 32 || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
+    ],
+  }
+  return {
+    Rules
+  }
+}
+
 const useCognito = () => {
   const idToken = ref('')
 
@@ -59,6 +81,7 @@ const app = createApp({
 app.component('login', {
   setup() {
     const { idToken, signIn } = useCognito()
+    const { Rules } = useValidation()
     const alert = ref(false)
     const error = ref('')
     const valid = ref(false)
@@ -80,22 +103,6 @@ app.component('login', {
           error.value = 'エラーが発生しました。 ' + e.code + ': ' + e.message
         }
       }
-    }
-    const Rules = {
-      email: [
-        (v) => !!v || 'メールアドレスを入力してください',
-        (v) => v.length <= 32 || '32文字以下で入力してください',
-        (v) => /.+@.+\..+/.test(v) || 'メールアドレスを入力してください',
-      ],
-      password: [
-        (v) => !!v || 'パスワードを入力してください',
-        (v) => /^(?=.*[A-Z])/.test(v) || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
-        (v) => /^(?=.*[a-z])/.test(v) || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
-        (v) => /^(?=.*[0-9])/.test(v) || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
-        (v) => /^(?=.*[ ^$*.[\]{}()?"!@#%&/\\,><':;|_~`=+-])/.test(v) || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
-        (v) => v.length >= 8 || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
-        (v) => v.length <= 32 || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
-      ],
     }
 
     return {
