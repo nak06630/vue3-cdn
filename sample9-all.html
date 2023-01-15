@@ -14,19 +14,30 @@
   <script src="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.js"></script>
   <script src="https://unpkg.com/amazon-cognito-identity-js@6.1.3-unstableV5.9/dist/amazon-cognito-identity.min.js"></script>
   <script src="https://unpkg.com/vue-router@4"></script>
+  <script src="https://unpkg.com/vue-demi"></script>
+  <script src="https://unpkg.com/pinia"></script>
   <script>
 // Vue3 Composition API
 const { createApp, ref, onMounted, computed } = Vue
 const { CognitoUserPool, CognitoUser, AuthenticationDetails } = AmazonCognitoIdentity
+const { defineStore, createPinia } = Pinia
+
+const useUserStore = defineStore('user', () => {
+  const user = ref({})
+  function setUser(newValue) {
+    user.value = newValue
+  }
+  return { user, setUser }
+})
 
 const useCognito = () => {
-  const idToken = ref('')
+  const { user, setUser } = useUserStore()
 
   //https://github.com/aws-amplify/amplify-js/tree/master/packages/amazon-cognito-identity-js#usage
   const signIn = async(username, password) => {
     const poolData = {
       UserPoolId : 'ap-northeast-1_',
-      ClientId : ''
+      ClientId : 'xx'
     }
     const userPool = new CognitoUserPool(poolData)
     const userData = { Username: username, Pool: userPool }
@@ -36,7 +47,10 @@ const useCognito = () => {
     return new Promise((resolve, reject) => {
       cognitoUser.authenticateUser(authenticationDetails, {
         onSuccess: result => {
-          idToken.value = result.idToken.jwtToken
+          setUser({
+            idToken: result.idToken.jwtToken,
+            payload: result.idToken.payload
+          })
           resolve(result)
         },
         onFailure: err => {
@@ -47,7 +61,7 @@ const useCognito = () => {
   }
 
   return {
-    idToken,
+    user,
     signIn
   }
 }
@@ -126,7 +140,6 @@ const useSearchHightLight = () => {
   }
 }
 
-
 const Users = {
   setup() {
     const { data: users, error, getData } = useFetch()
@@ -156,6 +169,66 @@ const Users = {
   `
 }
 
+const Home = {
+  setup() {
+    const { user } = useUserStore()
+    return {
+      user
+    }
+  },
+  template: `
+    <v-row>
+      <v-col cols="12">
+        <v-card>
+          <v-card-text>
+            <v-row>
+              <v-col cols="12">
+                <v-toolbar density="compact" flat color="gray" class="elevaton-1" mb-2>
+                  <v-toolbar-title>ユーザー情報</v-toolbar-title>
+                  <v-spacer />
+                </v-toolbar>
+                <v-table density="compact">
+                  <thead>
+                    <tr>
+                      <th>key</th><th>value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>cognito:username</td><td>{{ user.payload['cognito:username'] }}</td></tr>
+                    <tr><td>email</td><td>{{ user.payload.email }}</td></tr>
+                    <tr><td>email_verified</td><td>{{ user.payload.email_verified }}</td></tr>
+                    <tr><td>name</td><td>{{ user.payload.name }}</td></tr>
+                    <tr><td>phone_number</td><td>{{ user.payload.phone_number }}</td></tr>
+                    <tr><td>sub</td><td>{{ user.payload.sub }}</td></tr>
+                  </tbody>
+                </v-table>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <v-row>
+      <v-col cols="12">
+        <v-card>
+          <v-card-text>
+            <v-row>
+              <v-col cols="12">
+                <v-toolbar density="compact" flat color="gray" class="elevaton-1" mb-2>
+                  <v-toolbar-title>ユーザー情報（raw）</v-toolbar-title>
+                  <v-spacer />
+                </v-toolbar>
+                <pre style="font-size: 0.8em; line-height: 1.2">{{ JSON.stringify(user.payload, null, 2) }}</pre>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  `
+}
+
 const About = {
   template: `
     <div>
@@ -168,8 +241,9 @@ const Layout = {
   setup() {
     const drawer = ref(true)
     const items = [
-      { name: 'Users', icon: 'mdi-home', to: '/secret/users' },
-      { name: 'About', icon: 'mdi-information', to: '/secret/about' },
+      { name: 'Home', icon: 'mdi-home', to: 'home' },
+      { name: 'Users', icon: 'mdi-account', to: 'users' },
+      { name: 'About', icon: 'mdi-information', to: 'about' },
     ]
     return {
         drawer,
@@ -218,7 +292,7 @@ const Login = {
       try {
         await signIn(username.value, password.value)
         alert.value = true
-        router.replace('/secret/users')
+        router.push('home')
       } catch(e) {
         alert.value = true
         if (e.message == 'Incorrect username or password.') {
@@ -272,14 +346,16 @@ const Login = {
 const routes = [
   {
     path: '/',
+    name: 'login',
     component: Login,
   },
   {
     path: '/secret',
     component: Layout,
     children: [
-      { path: '/users', component: Users },
-      { path: '/about', component: About },
+      { path: '/home',  name: 'home',  component: Home },
+      { path: '/users', name: 'users', component: Users },
+      { path: '/about', name: 'about', component: About },
     ]
   }
 ]
@@ -298,6 +374,7 @@ const app = createApp({
 })
 .use(router)
 .use(vuetify)
+.use(createPinia())
 
 app.component('n-card', {
   props: {
