@@ -9,7 +9,7 @@
   <script src="https://unpkg.com/vue@next"></script>
   <script>
 // Vue3 Composition API
-const { createApp, ref, toRefs  } = Vue
+const { createApp, ref, toRefs } = Vue
 
 const app = createApp({
   template: `
@@ -35,8 +35,6 @@ app.component('pages-main', {
 app.component('button-counter', {
   props: {
     count: Number
-  },
-  setup(props) {
   },
   template: `
     <button @click="$emit('increment')">

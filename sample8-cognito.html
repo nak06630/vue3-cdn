@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <title>Vue 3</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script src="https://unpkg.com/vue@next"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.js"></script>
+  <script src="https://unpkg.com/amazon-cognito-identity-js@6.1.3-unstableV5.9/dist/amazon-cognito-identity.min.js"></script>
+  <script>
+// Vue3 Composition API
+const { createApp, ref, onMounted } = Vue
+const { CognitoUserPool, CognitoUser, AuthenticationDetails } = AmazonCognitoIdentity
+const vuetify = Vuetify.createVuetify()
+
+const app = createApp({
+  template: `<login />`
+}).use(vuetify)
+
+app.component('login', {
+  setup() {
+    const alert = ref(false)
+    const error = ref('')
+    const valid = ref(false)
+    const username = ref('')
+    const password = ref('')
+    const idToken = ref('')
+    const accessToken = ref('')
+
+    //https://github.com/aws-amplify/amplify-js/tree/master/packages/amazon-cognito-identity-js#usage
+    const signIn = async(username, password) => {
+      const poolData = {
+        UserPoolId : 'ap-northeast-1_XXXXXXXXX',
+        ClientId : 'XX'
+      }
+      const userPool = new CognitoUserPool(poolData)
+      const userData = { Username: username, Pool: userPool }
+      const cognitoUser = new CognitoUser(userData)
+      const authenticationData = { Username: username, Password: password }
+      const authenticationDetails = new AuthenticationDetails(authenticationData)
+      return new Promise((resolve, reject) => {
+        cognitoUser.authenticateUser(authenticationDetails, {
+          onSuccess: result => {
+            accessToken.value = result.getAccessToken().getJwtToken();
+            idToken.value = result.idToken.jwtToken
+            resolve(result)
+          },
+          onFailure: err => {
+            reject(err)
+          }
+        })
+      })
+    }
+
+    const clickSignIn = async () => {
+      try {
+        await signIn(username.value, password.value)
+        alert.value = true
+        error.value = 'ログインに成功しました。idToken is ' + idToken.value
+      } catch(e) {
+        alert.value = true
+        if (e.message == 'Incorrect username or password.') {
+          error.value = 'ユーザIDまたはパスワードが正しくありません。'
+        } else if (e.message == 'Password attempts exceeded') {
+          error.value = 'パスワード試行回数が上限を超えました。'
+        } else {
+          error.value = 'エラーが発生しました。 ' + e.code + ': ' + e.message
+        }
+      }
+    }
+    const Rules = {
+      email: [
+        (v) => !!v || 'メールアドレスを入力してください',
+        (v) => v.length <= 32 || '32文字以下で入力してください',
+        (v) => /.+@.+\..+/.test(v) || 'メールアドレスを入力してください',
+      ],
+      password: [
+        (v) => !!v || 'パスワードを入力してください',
+        (v) => /^(?=.*[A-Z])/.test(v) || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
+        (v) => /^(?=.*[a-z])/.test(v) || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
+        (v) => /^(?=.*[0-9])/.test(v) || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
+        (v) => /^(?=.*[ ^$*.[\]{}()?"!@#%&/\\,><':;|_~`=+-])/.test(v) || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
+        (v) => v.length >= 8 || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
+        (v) => v.length <= 32 || '8～32文字で大文字、小文字、数字、記号を含む必要があります',
+      ],
+    }
+
+    return {
+      alert,
+      error,
+      valid,
+      Rules,
+      username,
+      password,
+      clickSignIn
+    }
+  },
+  template: `
+    <v-app>
+      <v-main>
+        <v-container>
+          <v-alert type="error" v-model="alert" closable> {{ error }}</v-alert>
+          <v-row justify="center">
+            <v-col>
+              <v-card max-width="420px" class="mx-auto my-8">
+                <v-card-title class="font-weight-bold mb-4">ログイン</v-card-title>
+                <v-form v-model="valid">
+                  <v-card-text>
+                    <v-text-field v-model="username" variant="outlined" density="compact" label="ユーザー名" :rules="Rules.username" />
+                    <v-text-field v-model="password" variant="outlined" density="compact" label="パスワード" type="password" :rules="Rules.password" />
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-spacer />
+                    <v-btn block variant="elevated" :disabled="!valid" color="primary" @click="clickSignIn">ログイン</v-btn>
+                  </v-card-actions>
+                </v-form>          
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-main>
+    </v-app>
+  `
+})
+
+app.mount("#app")
+
+  </script>
+</body>
+</html>

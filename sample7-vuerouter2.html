@@ -100,7 +100,7 @@ const Users = {
 
 const Photos = {
   setup() {
-    const { data: users, error, getData } = useFetch()
+    const { data: photos, error, getData } = useFetch()
     const headers = ref([
       { text: 'Title', value: 'title' },
       { text: 'Url', value: 'url' },
@@ -109,20 +109,26 @@ const Photos = {
 
     onMounted(async () => {
       await getData("https://jsonplaceholder.typicode.com/photos")
-      users.value = users.value.map(item => {
-        return { name: item.name, email: item.email, website: item.website }
+      photos.value = photos.value.splice( 1, 16 )
+      photos.value = photos.value.map(item => {
+        return { title: item.title, url: item.url, thumbnailUrl: item.thumbnailUrl }
       })
+      console.log(photos.value)
     })
 
     return {
       headers,
-      users,
+      photos,
       error,
     }
   },
   template: `
-    <n-card title="Users Table">
-      <n-search-table :headers="headers" :items="photos" />
+    <n-card title="Photos Table">
+      <v-row>
+        <v-col v-for="n in 9">
+          <v-img :src="photos[n].thumbnailUrl" />
+        </v-col>
+      </v-row>
     </n-card>
   `
 }
@@ -202,7 +208,6 @@ const app = createApp({
 })
 .use(router)
 .use(vuetify)
-.mount("#app")
 
 app.component('n-card', {
   props: {
@@ -262,6 +267,8 @@ app.component('n-search-table', {
     </v-table>
   `
 })
+
+app.mount("#app")
 
   </script>
 </body>

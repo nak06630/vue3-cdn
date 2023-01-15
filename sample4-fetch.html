@@ -15,15 +15,35 @@
   <script>
 // Vue3 Composition API
 const { createApp, ref, onMounted } = Vue
-const { createVuetify } = Vuetify
-
-const vuetify = createVuetify()
+const vuetify = Vuetify.createVuetify()
 
 const app = createApp({
   template: `<main-page />`
 }).use(vuetify)
 
 app.component('main-page', {
+  template: `
+    <v-app>
+      <v-main>
+        <v-container>
+          <v-card>
+            <v-card-title>
+              Users Table
+            </v-card-title>
+            <v-card-subtitle>
+              fetch sample
+            </v-card-subtitle>
+            <v-card-text>
+              <users />
+            </v-card-text>
+          </v-card>
+        </v-container>
+      </v-main>
+    </v-app>
+  `
+})
+
+app.component('users', {
   setup() {
     const users = ref([])
     const error = ref({})
@@ -54,38 +74,22 @@ app.component('main-page', {
     }
   },
   template: `
-    <v-app>
-      <v-main>
-        <v-container>
-          <v-card>
-            <v-card-title>
-              Users Table
-            </v-card-title>
-            <v-card-subtitle>
-              fetch sample
-            </v-card-subtitle>
-            <v-card-text>
-              <v-table density="compact">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Website</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="user in users" :key="user.id">
-                    <td>{{ user.name }}</td>
-                    <td>{{ user.email }}</td>
-                    <td>{{ user.website }}</td>
-                  </tr>
-                </tbody>
-              </v-table>
-            </v-card-text>
-          </v-card>
-        </v-container>
-      </v-main>
-    </v-app>
+  <v-table density="compact">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Website</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="user in users" :key="user.id">
+        <td>{{ user.name }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.website }}</td>
+      </tr>
+    </tbody>
+  </v-table>
   `
 })
 
