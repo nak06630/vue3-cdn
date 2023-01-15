@@ -23,7 +23,10 @@ const { CognitoUserPool, CognitoUser, AuthenticationDetails } = AmazonCognitoIde
 const { defineStore, createPinia } = Pinia
 
 const useUserStore = defineStore('user', () => {
-  const user = ref({})
+  const user = ref({
+    idToken: '',
+    payload: {}
+  })
   function setUser(newValue) {
     user.value = newValue
   }
@@ -177,63 +180,32 @@ const Home = {
     }
   },
   template: `
-    <v-row>
-      <v-col cols="12">
-        <v-card>
-          <v-card-text>
-            <v-row>
-              <v-col cols="12">
-                <v-toolbar density="compact" flat color="gray" class="elevaton-1" mb-2>
-                  <v-toolbar-title>ユーザー情報</v-toolbar-title>
-                  <v-spacer />
-                </v-toolbar>
-                <v-table density="compact">
-                  <thead>
-                    <tr>
-                      <th>key</th><th>value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr><td>cognito:username</td><td>{{ user.payload['cognito:username'] }}</td></tr>
-                    <tr><td>email</td><td>{{ user.payload.email }}</td></tr>
-                    <tr><td>email_verified</td><td>{{ user.payload.email_verified }}</td></tr>
-                    <tr><td>name</td><td>{{ user.payload.name }}</td></tr>
-                    <tr><td>phone_number</td><td>{{ user.payload.phone_number }}</td></tr>
-                    <tr><td>sub</td><td>{{ user.payload.sub }}</td></tr>
-                  </tbody>
-                </v-table>
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <v-row>
-      <v-col cols="12">
-        <v-card>
-          <v-card-text>
-            <v-row>
-              <v-col cols="12">
-                <v-toolbar density="compact" flat color="gray" class="elevaton-1" mb-2>
-                  <v-toolbar-title>ユーザー情報（raw）</v-toolbar-title>
-                  <v-spacer />
-                </v-toolbar>
-                <pre style="font-size: 0.8em; line-height: 1.2">{{ JSON.stringify(user.payload, null, 2) }}</pre>
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+    <n-card title="ユーザー情報">
+      <v-table density="compact">
+        <thead>
+          <tr>
+            <th>key</th><th>value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>cognito:username</td><td>{{ user.payload['cognito:username'] }}</td></tr>
+          <tr><td>email</td><td>{{ user.payload.email }}</td></tr>
+          <tr><td>email_verified</td><td>{{ user.payload.email_verified }}</td></tr>
+          <tr><td>name</td><td>{{ user.payload.name }}</td></tr>
+          <tr><td>phone_number</td><td>{{ user.payload.phone_number }}</td></tr>
+          <tr><td>sub</td><td>{{ user.payload.sub }}</td></tr>
+          <tr><td>idToken</td><td>{{ user.idToken }}</td></tr>
+          <tr><td>raw</td><td><pre style="font-size: 0.8em; line-height: 1.2">{{ JSON.stringify(user.payload, null, 2) }}</pre></td></tr>
+        </tbody>
+      </v-table>
+      
+    </n-card>
   `
 }
 
 const About = {
   template: `
-    <div>
-      <h1>This is an About page</h1>
-    </div>
+    <h1>This is an About page</h1>
   `
 }
 
