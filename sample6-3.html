@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <title>Vue 3</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script src="https://unpkg.com/vue@next"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.js"></script>
+  <script>
+// Vue3 Composition API
+const { createApp, ref, onMounted, computed } = Vue
+const vuetify = Vuetify.createVuetify()
+
+const app = createApp({
+  template: `<main-page />`
+}).use(vuetify)
+
+const useFetch = () => {
+  const data = ref([])
+  const error = ref('')
+
+  const getData = async(url) => {
+    try {
+      const res = await fetch(url)
+      if(!res.ok) {
+        switch (res.status) {
+          case 400: throw Error('INVALID_TOKEN');
+          case 401: throw Error('UNAUTHORIZED');
+          case 404: throw Error('NOT_FOUND');
+          case 500: throw Error('INTERNAL_SERVER_ERROR');
+          case 502: throw Error('BAD_GATEWAY');
+          default:  throw Error('UNHANDLED_ERROR');
+        } 
+      }
+      data.value = await res.json()
+    } catch (e) {
+      error.value = e.message
+    }
+  }
+  
+  return {
+    data,
+    error,
+    getData
+  }
+}
+
+const useSearchHightLight = () => {
+  const search = ref("")
+
+  const highLight = (text) => {
+    let searchWord = search.value
+    if (typeof(text) !== "string") return text
+    if (searchWord === "") return text
+    if (!text.includes(searchWord)) return text
+
+    const re = new RegExp(searchWord, "g")
+
+    return text.replace(re, function (search) {
+      return '<span style="background-color:yellow;font-weight:bold">' + search + '</span>'
+    })
+  }
+
+  return {
+    search,
+    highLight,
+  }
+}
+
+app.component('n-search-table', {
+  props: {
+    headers: Array,
+    items: Array
+  },
+  setup(props) {
+    const { haeders, items } = Vue.toRefs(props)
+    const { search, highLight } = useSearchHightLight()
+
+    const updated_items = computed(() => {
+      if (search.value === "") return items.value
+      return items.value.filter((item) => {
+        return JSON.stringify(item).includes(search.value)
+      })
+    })
+
+    return {
+      search,
+      highLight,
+      updated_items
+    }
+  },
+  template: `
+    <v-text-field density="compact" v-model="search" label="検索" />
+    <v-table density="compact">
+      <thead>
+        <tr>
+          <th v-for="(item, index) in headers" :key="index">
+            {{item.text}}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(item, index) in updated_items" :key="index">
+          <td v-for="value in item" :key="value">
+            <div v-html="highLight(value)" />
+          </td>
+        </tr>
+      </tbody>
+    </v-table>
+  `
+})
+
+app.component('n-card', {
+  props: {
+    title: String
+  },
+  template: `
+    <v-card>
+      <v-card-title>
+        {{ title }}
+      </v-card-title>
+      <v-card-text>
+        <slot />
+      </v-card-text>
+    </v-card>
+  `
+})
+
+app.component('n-main', {
+  template: `
+    <v-app>
+      <v-main>
+        <v-container>
+          <slot />
+        </v-container>
+      </v-main>
+    </v-app>
+  `
+})
+
+app.component('main-page', {
+  setup() {
+    const { data: users, error, getData } = useFetch()
+    const headers = ref([
+      { text: 'Name', value: 'name' },
+      { text: 'Email', value: 'email' },
+      { text: 'Website', value: 'website' },
+    ])
+
+    onMounted(async () => {
+      await getData("https://jsonplaceholder.typicode.com/users")
+      users.value = users.value.map(item => {
+        return { name: item.name, email: item.email, website: item.website }
+      })
+    })
+
+    return {
+      headers,
+      users,
+      error,
+    }
+  },
+  template: `
+    <n-main>
+      <n-card title="Users Table">
+        <n-search-table :headers="headers" :items="users" />
+      </n-card>
+    </n-main>
+  `
+})
+
+app.mount("#app")
+
+// ref: https://reffect.co.jp/vue/vue-js-3composition-api
+
+  </script>
+</body>
+</html>

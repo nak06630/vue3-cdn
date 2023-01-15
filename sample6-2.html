@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <title>Vue 3</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script src="https://unpkg.com/vue@next"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.js"></script>
+  <script>
+// Vue3 Composition API
+const { createApp, ref, onMounted, computed } = Vue
+
+const vuetify = Vuetify.createVuetify()
+
+const app = createApp({
+  template: `<main-page />`
+}).use(vuetify)
+
+app.component('main-page', {
+  setup() {
+    const users = ref([])
+    const error = ref({})
+    const search = ref([])
+
+    onMounted(async () => {
+      try {
+        const res = await fetch("https://jsonplaceholder.typicode.com/users")
+        if(!res.ok) {
+          switch (res.status) {
+            case 400: throw Error('INVALID_TOKEN');
+            case 401: throw Error('UNAUTHORIZED');
+            case 404: throw Error('NOT_FOUND');
+            case 500: throw Error('INTERNAL_SERVER_ERROR');
+            case 502: throw Error('BAD_GATEWAY');
+            default:  throw Error('UNHANDLED_ERROR');
+          } 
+        }
+        users.value = await res.json()
+      } catch (e) {
+        error.value = e.message
+        console.log(error.value)
+      }
+    })
+
+    const updated_users = computed(() => {
+      let searchWord = search.value
+
+      if (searchWord === "") return users.value
+
+      return users.value.filter((user) => {
+        return (
+          user.name.includes(searchWord) ||
+          user.email.includes(searchWord) ||
+          user.website.includes(searchWord)
+        )
+      })
+    })
+
+    const highLight = (text) => {
+      let searchWord = search.value
+
+      if (searchWord === "") return text
+
+      if (!text.includes(searchWord)) return text
+
+      const re = new RegExp(searchWord, "g");
+
+      return text.replace(re, function (search) {
+        return '<span style="background-color:yellow;font-weight:bold">' + search + '</span>'
+      })
+    }
+
+    return {
+      users,
+      error,
+      search,
+      updated_users,
+      highLight
+    }
+  },
+  template: `
+    <v-app>
+      <v-main>
+        <v-container>
+          <v-card>
+            <v-card-title>
+              Users Table
+            </v-card-title>
+            <v-card-subtitle>
+              <v-text-field density="compact" v-model="search" label="検索" />
+            </v-card-subtitle>
+            <v-card-text>
+              <v-table density="compact">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Website</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="user in updated_users" :key="user.id">
+                    <td v-html="highLight(user.name)"></td>
+                    <td v-html="highLight(user.email)"></td>
+                    <td v-html="highLight(user.website)"></td>
+                  </tr>
+                </tbody>
+              </v-table>
+            </v-card-text>
+          </v-card>
+        </v-container>
+      </v-main>
+    </v-app>
+  `
+})
+
+app.mount("#app")
+
+// ref: https://reffect.co.jp/vue/vue-js-3composition-api
+
+  </script>
+</body>
+</html>

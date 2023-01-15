@@ -9,15 +9,22 @@
   <script src="https://unpkg.com/vue@next"></script>
   <script>
 // Vue3 Composition API
-Vue.createApp({
+const { createApp, ref } = Vue
+
+createApp({
   setup() {
-    const message = Vue.ref("Hello World")
+    const message = ref("Hello World")
+    const count = ref(0)
     return {
-      message
+      message,
+      count
     }
   },
   template: `
     <h1>{{ message }}</h1>
+    <button @click="count++">
+      {{ count }} times.
+    </button>
   `
 }).mount("#app")
   </script>

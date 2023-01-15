@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <title>Vue 3</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script src="https://unpkg.com/vue@next"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.js"></script>
+  <script src="https://unpkg.com/vue-router@4"></script>
+  <script>
+// Vue3 Composition API
+const { createApp, ref, onMounted, computed } = Vue
+
+const useFetch = () => {
+  const data = ref([])
+  const error = ref('')
+
+  const getData = async(url) => {
+    try {
+      const res = await fetch(url)
+      if(!res.ok) {
+        switch (res.status) {
+          case 400: throw Error('INVALID_TOKEN');
+          case 401: throw Error('UNAUTHORIZED');
+          case 404: throw Error('NOT_FOUND');
+          case 500: throw Error('INTERNAL_SERVER_ERROR');
+          case 502: throw Error('BAD_GATEWAY');
+          default:  throw Error('UNHANDLED_ERROR');
+        } 
+      }
+      data.value = await res.json()
+    } catch (e) {
+      error.value = e.message
+    }
+  }
+  
+  return {
+    data,
+    error,
+    getData
+  }
+}
+
+const useSearchHightLight = () => {
+  const search = ref("")
+
+  const highLight = (text) => {
+    let searchWord = search.value
+    if (typeof(text) !== "string") return text
+    if (searchWord === "") return text
+    if (!text.includes(searchWord)) return text
+
+    const re = new RegExp(searchWord, "g")
+
+    return text.replace(re, function (search) {
+      return '<span style="background-color:yellow;font-weight:bold">' + search + '</span>'
+    })
+  }
+
+  return {
+    search,
+    highLight,
+  }
+}
+
+const Users = {
+  setup() {
+    const { data: users, error, getData } = useFetch()
+    const headers = ref([
+      { text: 'Name', value: 'name' },
+      { text: 'Email', value: 'email' },
+      { text: 'Website', value: 'website' },
+    ])
+
+    onMounted(async () => {
+      await getData("https://jsonplaceholder.typicode.com/users")
+      users.value = users.value.map(item => {
+        return { name: item.name, email: item.email, website: item.website }
+      })
+    })
+
+    return {
+      headers,
+      users,
+      error,
+    }
+  },
+  template: `
+    <n-card title="Users Table">
+      <n-search-table :headers="headers" :items="users" />
+    </n-card>
+  `
+}
+
+const Photos = {
+  setup() {
+    const { data: users, error, getData } = useFetch()
+    const headers = ref([
+      { text: 'Title', value: 'title' },
+      { text: 'Url', value: 'url' },
+      { text: 'ThumbnailUrl', value: 'thumbnailUrl' },
+    ])
+
+    onMounted(async () => {
+      await getData("https://jsonplaceholder.typicode.com/photos")
+      users.value = users.value.map(item => {
+        return { name: item.name, email: item.email, website: item.website }
+      })
+    })
+
+    return {
+      headers,
+      users,
+      error,
+    }
+  },
+  template: `
+    <n-card title="Users Table">
+      <n-search-table :headers="headers" :items="photos" />
+    </n-card>
+  `
+}
+
+const Layout = {
+  setup() {
+    const drawer = ref(true)
+    const items = [
+      { name: 'Users', icon: 'mdi-home', to: '/users' },
+      { name: 'Photos', icon: 'mdi-home', to: '/photos' },
+      { name: 'About', icon: 'mdi-information', to: '/about' },
+    ]
+    return {
+        drawer,
+        items
+    }
+  },
+  template: `
+    <v-app>
+      <v-app-bar dark color="primary" app>
+        <v-app-bar-nav-icon variant="text" @click.stop="drawer = !drawer" />
+        <v-toolbar-title>
+          title
+        </v-toolbar-title>
+      </v-app-bar>
+      <v-navigation-drawer v-model="drawer" permanent app>
+        <v-list>
+          <v-list-item v-for="(item, i) in items" :key="i" :value="item.name" :to="item.to">
+            <v-list-item-title>
+              <v-icon color="primary" :icon="item.icon" class="pb-2" />
+              {{ item.name }}
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-navigation-drawer>
+
+      <v-main>
+        <v-container>
+          <router-view />
+        </v-container>
+      </v-main>
+    </v-app>
+  `
+}
+
+const About = {
+  template: `
+    <div>
+      <h1>This is an About page</h1>
+    </div>
+  `
+}
+
+const routes = [
+  {
+    path: '/',
+    component: Layout,
+    children: [
+      { path: '/users', component: Users },
+      { path: '/photos', component: Photos },
+      { path: '/about', component: About },
+    ]
+  }
+]
+
+const router = VueRouter.createRouter({
+  history: VueRouter.createWebHashHistory(),
+  routes,
+})
+
+const vuetify = Vuetify.createVuetify()
+
+const app = createApp({
+  template: `
+    <router-view />
+  `
+})
+.use(router)
+.use(vuetify)
+.mount("#app")
+
+app.component('n-card', {
+  props: {
+    title: String
+  },
+  template: `
+    <v-card>
+      <v-card-title>
+        {{ title }}
+      </v-card-title>
+      <v-card-text>
+        <slot />
+      </v-card-text>
+    </v-card>
+  `
+})
+
+app.component('n-search-table', {
+  props: {
+    headers: Array,
+    items: Array
+  },
+  setup(props) {
+    const { haeders, items } = Vue.toRefs(props)
+    const { search, highLight } = useSearchHightLight()
+
+    const updated_items = computed(() => {
+      if (search.value === "") return items.value
+      return items.value.filter((item) => {
+        return JSON.stringify(item).includes(search.value)
+      })
+    })
+
+    return {
+      search,
+      highLight,
+      updated_items
+    }
+  },
+  template: `
+    <v-text-field density="compact" v-model="search" label="検索" />
+    <v-table density="compact">
+      <thead>
+        <tr>
+          <th v-for="(item, index) in headers" :key="index">
+            {{item.text}}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(item, index) in updated_items" :key="index">
+          <td v-for="value in item" :key="value">
+            <div v-html="highLight(value)" />
+          </td>
+        </tr>
+      </tbody>
+    </v-table>
+  `
+})
+
+  </script>
+</body>
+</html>
