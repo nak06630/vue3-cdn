@@ -19,44 +19,51 @@ const { createApp, ref, onMounted } = Vue
 const { CognitoUserPool, CognitoUser, AuthenticationDetails } = AmazonCognitoIdentity
 const vuetify = Vuetify.createVuetify()
 
+const useCognito = () => {
+  const idToken = ref('')
+
+  //https://github.com/aws-amplify/amplify-js/tree/master/packages/amazon-cognito-identity-js#usage
+  const signIn = async(username, password) => {
+    const poolData = {
+      UserPoolId : 'ap-northeast-1_',
+      ClientId : ''
+    }
+    const userPool = new CognitoUserPool(poolData)
+    const userData = { Username: username, Pool: userPool }
+    const cognitoUser = new CognitoUser(userData)
+    const authenticationData = { Username: username, Password: password }
+    const authenticationDetails = new AuthenticationDetails(authenticationData)
+    return new Promise((resolve, reject) => {
+      cognitoUser.authenticateUser(authenticationDetails, {
+        onSuccess: result => {
+          idToken.value = result.idToken.jwtToken
+          resolve(result)
+        },
+        onFailure: err => {
+          reject(err)
+        }
+      })
+    })
+  }
+
+  return {
+    idToken,
+    signIn
+  }
+}
+
 const app = createApp({
   template: `<login />`
 }).use(vuetify)
 
 app.component('login', {
   setup() {
+    const { idToken, signIn } = useCognito()
     const alert = ref(false)
     const error = ref('')
     const valid = ref(false)
     const username = ref('')
     const password = ref('')
-    const idToken = ref('')
-    const accessToken = ref('')
-
-    //https://github.com/aws-amplify/amplify-js/tree/master/packages/amazon-cognito-identity-js#usage
-    const signIn = async(username, password) => {
-      const poolData = {
-        UserPoolId : 'ap-northeast-1_XXXXXXXXX',
-        ClientId : 'XX'
-      }
-      const userPool = new CognitoUserPool(poolData)
-      const userData = { Username: username, Pool: userPool }
-      const cognitoUser = new CognitoUser(userData)
-      const authenticationData = { Username: username, Password: password }
-      const authenticationDetails = new AuthenticationDetails(authenticationData)
-      return new Promise((resolve, reject) => {
-        cognitoUser.authenticateUser(authenticationDetails, {
-          onSuccess: result => {
-            accessToken.value = result.getAccessToken().getJwtToken()
-            idToken.value = result.idToken.jwtToken
-            resolve(result)
-          },
-          onFailure: err => {
-            reject(err)
-          }
-        })
-      })
-    }
 
     const clickSignIn = async () => {
       try {
