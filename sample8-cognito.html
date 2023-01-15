@@ -47,7 +47,7 @@ app.component('login', {
       return new Promise((resolve, reject) => {
         cognitoUser.authenticateUser(authenticationDetails, {
           onSuccess: result => {
-            accessToken.value = result.getAccessToken().getJwtToken();
+            accessToken.value = result.getAccessToken().getJwtToken()
             idToken.value = result.idToken.jwtToken
             resolve(result)
           },
