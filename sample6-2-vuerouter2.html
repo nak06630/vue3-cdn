@@ -98,47 +98,11 @@ const Users = {
   `
 }
 
-const Photos = {
-  setup() {
-    const { data: photos, error, getData } = useFetch()
-    const headers = ref([
-      { text: 'Title', value: 'title' },
-      { text: 'Url', value: 'url' },
-      { text: 'ThumbnailUrl', value: 'thumbnailUrl' },
-    ])
-
-    onMounted(async () => {
-      await getData("https://jsonplaceholder.typicode.com/photos")
-      photos.value = photos.value.splice( 1, 16 )
-      photos.value = photos.value.map(item => {
-        return { title: item.title, url: item.url, thumbnailUrl: item.thumbnailUrl }
-      })
-      console.log(photos.value)
-    })
-
-    return {
-      headers,
-      photos,
-      error,
-    }
-  },
-  template: `
-    <n-card title="Photos Table">
-      <v-row>
-        <v-col v-for="n in 9">
-          <v-img :src="photos[n].thumbnailUrl" />
-        </v-col>
-      </v-row>
-    </n-card>
-  `
-}
-
 const Layout = {
   setup() {
     const drawer = ref(true)
     const items = [
       { name: 'Users', icon: 'mdi-home', to: '/users' },
-      { name: 'Photos', icon: 'mdi-home', to: '/photos' },
       { name: 'About', icon: 'mdi-information', to: '/about' },
     ]
     return {
@@ -188,7 +152,6 @@ const routes = [
     component: Layout,
     children: [
       { path: '/users', component: Users },
-      { path: '/photos', component: Photos },
       { path: '/about', component: About },
     ]
   }
