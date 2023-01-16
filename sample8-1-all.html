@@ -17,6 +17,11 @@
   <script src="https://unpkg.com/vue-demi"></script>
   <script src="https://unpkg.com/pinia"></script>
   <script>
+let process = { env : {} }
+function jsonp_callback(env) {
+   process.env = env
+}
+
 // Vue3 Composition API
 const { createApp, ref, onMounted, computed } = Vue
 const { CognitoUserPool, CognitoUser, AuthenticationDetails } = AmazonCognitoIdentity
@@ -39,8 +44,8 @@ const useCognito = () => {
   //https://github.com/aws-amplify/amplify-js/tree/master/packages/amazon-cognito-identity-js#usage
   const signIn = async(username, password) => {
     const poolData = {
-      UserPoolId : 'ap-northeast-1_',
-      ClientId : 'xx'
+      UserPoolId : process.env.USER_POOL_ID,
+      ClientId : process.env.USER_CLIENT_ID
     }
     const userPool = new CognitoUserPool(poolData)
     const userData = { Username: username, Pool: userPool }
@@ -84,14 +89,14 @@ const useFetch = () => {
           case 500: throw Error('INTERNAL_SERVER_ERROR')
           case 502: throw Error('BAD_GATEWAY')
           default:  throw Error('UNHANDLED_ERROR')
-        } 
+        }
       }
       data.value = await res.json()
     } catch (e) {
       error.value = e.message
     }
   }
-  
+
   return {
     data,
     error,
@@ -145,7 +150,7 @@ const useSearchHightLight = () => {
 
 const Users = {
   setup() {
-    const alert = ref(false) 
+    const alert = ref(false)
     const { data: users, error, getData } = useFetch()
     const headers = ref([
       { text: 'Name', value: 'name' },
@@ -205,7 +210,7 @@ const Home = {
           <tr><td>raw</td><td><pre style="font-size: 0.8em; line-height: 1.2">{{ JSON.stringify(user.payload, null, 2) }}</pre></td></tr>
         </tbody>
       </v-table>
-      
+
     </n-card>
   `
 }
@@ -312,7 +317,7 @@ const Login = {
                     <v-spacer />
                     <v-btn block variant="elevated" :disabled="!valid" color="primary" @click="clickSignIn">ログイン</v-btn>
                   </v-card-actions>
-                </v-form>          
+                </v-form>
               </v-card>
             </v-col>
           </v-row>
@@ -344,7 +349,20 @@ const router = VueRouter.createRouter({
   routes,
 })
 
-const vuetify = Vuetify.createVuetify()
+const vuetify = Vuetify.createVuetify({
+  theme: {
+    defaultTheme: 'CustomTheme',
+    themes: {
+      CustomTheme: {
+        dark: false,
+        colors: {
+          primary: '#2935aa',
+          background: '#f5f5f5'
+        }
+      }
+    }
+  }
+})
 
 const app = createApp({
   template: `
@@ -415,7 +433,7 @@ app.component('n-search-table', {
 })
 
 app.mount("#app")
-
   </script>
+  <script src="./.env"></script>
 </body>
 </html>

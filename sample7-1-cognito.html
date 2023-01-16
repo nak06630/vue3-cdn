@@ -17,7 +17,20 @@
 // Vue3 Composition API
 const { createApp, ref, onMounted } = Vue
 const { CognitoUserPool, CognitoUser, AuthenticationDetails } = AmazonCognitoIdentity
-const vuetify = Vuetify.createVuetify()
+const vuetify = Vuetify.createVuetify({
+  theme: {
+    defaultTheme: 'CustomTheme',
+    themes: {
+      CustomTheme: {
+        dark: false,
+        colors: {
+          primary: '#2935aa',
+          background: '#f5f5f5'
+        }
+      }
+    }
+  }
+})
 
 const useValidation = () => {
   const Rules = {
@@ -133,7 +146,7 @@ app.component('login', {
                     <v-spacer />
                     <v-btn block variant="elevated" :disabled="!valid" color="primary" @click="clickSignIn">ログイン</v-btn>
                   </v-card-actions>
-                </v-form>          
+                </v-form>
               </v-card>
             </v-col>
           </v-row>
