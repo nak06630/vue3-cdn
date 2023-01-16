@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <title>Vue 3</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script src="https://unpkg.com/vue@next"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.1.1/dist/vuetify.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@next/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <script>
+// Vue3 Composition API
+const { createApp, ref, onMounted } = Vue
+const vuetify = Vuetify.createVuetify()
+
+const app = createApp({
+  template: `
+    <v-app>
+      <v-main>
+        <v-container>
+          <v-card>
+            <v-card-title>
+              chart
+            </v-card-title>
+            <v-card-text>
+              <chart-bar />
+            </v-card-text>
+          </v-card>
+        </v-container>
+      </v-main>
+    </v-app>
+  `
+}).use(vuetify)
+
+app.component('chart-bar', {
+  setup() {
+    const graph = ref()
+    let ctx
+    let myChart
+
+    onMounted(() => {
+      ctx = graph.value.getContext('2d')
+      drawChart()
+    })
+
+    const drawChart = () => {
+      myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+          datasets: [{
+            label: '# of Votes',
+            data: [12, 19, 3, 5, 2, 3],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      })
+    }
+
+    return {
+      graph,
+      drawChart
+    }
+  },
+  template: `
+    <canvas ref="graph" style="height:500px;"></canvas>
+  `
+})
+app.mount("#app")
+  </script>
+</body>
+</html>
